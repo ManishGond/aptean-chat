@@ -4,15 +4,19 @@ import generateTokenAndSetCookie from "../utils/generateToken.js";
 
 export const signUpUser = async (req, res) => {
   try {
-    const { fullName, username, password, confirmPassword, gender } = req.body;
+    const { fullName, email, username, password, confirmPassword, gender } =
+      req.body;
 
     if (password != confirmPassword) {
       return res.status(400).json({ error: "Passwords don't match" });
     }
 
-    const user = await User.findOne({ username });
+    if (!fullName || !email || !username || !password || !gender) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
 
-    if (user) {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
@@ -25,6 +29,7 @@ export const signUpUser = async (req, res) => {
 
     const newUser = new User({
       fullName,
+      email,
       username,
       password: hashedPassword,
       gender,
@@ -38,6 +43,7 @@ export const signUpUser = async (req, res) => {
       res.status(201).json({
         _id: newUser._id,
         fullName: newUser.fullName,
+        email: newUser.email,
         username: newUser.username,
         profilePic: newUser.profilePic,
       });
@@ -46,7 +52,7 @@ export const signUpUser = async (req, res) => {
     }
   } catch (error) {
     console.log(
-      "System has thrown an error in signup controller: ",
+      "System has thrown an error in signup controller:",
       error.message
     );
     res.status(500).json({ error: "Internal Server Error" });
